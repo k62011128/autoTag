@@ -5,6 +5,7 @@
     <button @click="loadExcel">import</button>
     <button @click="saveFile">export</button>
     <button @click="test">test</button>
+    <span>{{progress}}</span>
     <gc-spread-sheets
         :hostClass="hostClass"
         @workbookInitialized="initWorkbook"
@@ -29,7 +30,8 @@ export default {
       importExcelFile: null,
       exportFileName: "export.xlsx",
       password: "",
-      mp: new Map()
+      mp: new Map(),
+      progress:'tip'
     };
   },
   methods: {
@@ -67,34 +69,7 @@ export default {
       // console.log(s.getArray(0,0,s.getRowCount(),s.getColumnCount()))
     },
     saveFile(e) {
-      // let spread = this.spread;
-      // let json = spread.toJSON();
-      // console.log(json.sheets)
-      // let tmp=JSON.stringify(json.sheets)
-      let mpSheet = this.spread.getSheetFromName('__TC_Taxonomy_Core')
-      //自定义输出文件流
-      // let res = new htmlTag('div')
-      // console.log(res.value)
-      // let obj = new htmlTag('div', {conref: 123435}, 'hello')
-      // res.add(obj)
-      // console.log(res.value)
-      let sheet = this.spread.getSheetFromName('A')
-      let xhtml = sheet.getRange(-1, -1, -1, -1).toHtml(GC.Spread.Sheets.HeaderOptions.noHeaders);
-      let __XbrlMatch = this.spread.getSheetFromName('__XbrlMatch')
 
-      //这里可以调输出标签样式
-      // let tmp=document.createElement('div')
-      // tmp.innerHTML=xhtml
-      // this.tmp=tmp
-      // console.log(tmp.getElementsByTagName('tr'))
-
-      //输出
-      let urlObject = window.URL || window.webkitURL || window
-      let export_blob = new Blob([xhtml])
-      let save_link = document.createElementNS('http://www.w3.org/1999/xhtml', 'a')
-      save_link.href = urlObject.createObjectURL(export_blob)
-      save_link.download = 'test.html'
-      save_link.click()
     },
     test() {
       //建立name到data行号的映射表
@@ -154,52 +129,83 @@ export default {
 
           //获得当前sheet
           let sheet = this.spread.getSheetFromName(currentSheetName)
+          let sheetRc = sheet.getRowCount()
+          let sheetCc = sheet.getColumnCount()
           //获得隐藏行列数量的前缀和数组
           let hiddenRowsNum = [], hiddenColumnsNum = []
           hiddenRowsNum[0] = sheet.getCell(0, -1).visible() ? 0 : 1
           hiddenColumnsNum[0] = sheet.getCell(-1, 0).visible() ? 0 : 1
-          for (let i = 1; i < sheet.getRowCount(); i++) {
+          for (let i = 1; i < sheetRc; i++) {
             hiddenRowsNum[i] = sheet.getCell(i, -1).visible() ? hiddenRowsNum[i - 1] : hiddenRowsNum[i - 1] + 1
           }
-          for (let i = 1; i < sheet.getColumnCount(); i++) {
+          for (let i = 1; i < sheetCc; i++) {
             hiddenColumnsNum[i] = sheet.getCell(-1, i).visible() ? hiddenColumnsNum[i - 1] : hiddenColumnsNum[i - 1] + 1
           }
           //获得任务列表
           let tasklist = taskMap.get(currentSheetName)
-          if(!tasklist){
-            let xhtml = sheet.getRange(-1, -1, -1, -1).toHtml(GC.Spread.Sheets.HeaderOptions.noHeaders);
-            total.innerHTML+=xhtml
-            continue
-          }
-          tasklist.sort((a, b) => {
-            if (a.posr > b.posr) {
-              return 1
-            } else if (a.posr < b.posr) {
-              return -1
-            } else {
-              if (a.posc > b.posc)
+          if (!!tasklist) {
+            tasklist.sort((a, b) => {
+              if (a.posr > b.posr) {
                 return 1
-              else if (a.posc < b.posc)
+              } else if (a.posr < b.posr) {
                 return -1
-              else
-                return 0
-            }
-          })
-          // console.log(tasklist)
-
+              } else {
+                if (a.posc > b.posc)
+                  return 1
+                else if (a.posc < b.posc)
+                  return -1
+                else
+                  return 0
+              }
+            })
+          }
           //当前sheet先调用tohtml输出下
           let xhtml = sheet.getRange(-1, -1, -1, -1).toHtml(GC.Spread.Sheets.HeaderOptions.noHeaders);
           let tmp = document.createElement('div')
           tmp.innerHTML = xhtml
-          // console.log(tmp.getElementsByTagName("tbody")[0])
-          for (let i = 0; i < tasklist.length; i++) {
-            this.changeTag(tmp.getElementsByTagName("tbody")[0], tasklist[i].posr - hiddenRowsNum[tasklist[i].posr], tasklist[i].posc - hiddenColumnsNum[tasklist[i].posc], tasklist[i].ixbrlTag.value)
+          let pa = tmp.getElementsByTagName("tbody")[0]
+          //删除空白行列
+          let judge = new RegExp('\\S')
+          for (let r = pa.children.length - 1; r >= 0; r--) {
+            if (judge.test(pa.children[r].innerText)) {
+              break
+            } else {
+              pa.removeChild(pa.children[r])
+            }
           }
-          total.innerHTML+=tmp.innerHTML
+          let flag = 0;
+          for (let c = sheetCc - hiddenColumnsNum[sheetCc - 1] - 1; c >= 0; c--) {
+            for (let r = 0; r < pa.children.length; r++) {
+              if (judge.test(pa.children[r].children[c].innerText)) {
+                flag = 1;
+                break
+              }
+            }
+            if (flag)
+              break;
+            for (let r = 0; r < pa.children.length; r++) {
+              pa.children[r].removeChild(pa.children[r].children[c])
+            }
+          }
+          //修改单元格样式
+          for (let r = 0; r < pa.children.length; r++) {
+            pa.children[r].children[0].style.padding='0 0 0 10px'
+          }
+          //替换指定数据为xhtml标签
+          if(!!tasklist){
+            for (let i = 0; i < tasklist.length; i++) {
+              this.changeTag(pa, tasklist[i].posr - hiddenRowsNum[tasklist[i].posr], tasklist[i].posc - hiddenColumnsNum[tasklist[i].posc], tasklist[i].ixbrlTag.value)
+            }
+          }
+          total.innerHTML += (new htmlTag('div', {}, 'Sheet Name : ' + currentSheetName)).value
+          total.innerHTML += tmp.innerHTML
+          total.innerHTML += (new htmlTag('div', {
+            style: 'height:60px;'
+          })).value
         }
+        //tip进度提示
+        this.progress='sheet ' + currentSheetName + ' is ok.'
       }
-      // console.log(total.innerHTML)
-
       //输出
       let urlObject = window.URL || window.webkitURL || window
       let export_blob = new Blob([total.innerHTML])
@@ -209,10 +215,6 @@ export default {
       save_link.click()
     },
     changeTag(parent, r, c, str) {
-      // console.log(parent)
-      // console.log(r)
-      // console.log(c)
-      // console.log(str)
       parent.children[r].children[c].innerHTML = str
     },
     getixbrlTag(mpKey, value) {//获得生成的ixbrl标签
