@@ -977,6 +977,26 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
+"@grapecity/spread-excelio@^15.2.5":
+  version "15.2.5"
+  resolved "https://registry.yarnpkg.com/@grapecity/spread-excelio/-/spread-excelio-15.2.5.tgz#d20269658cfb7fc15df40414c4e12b0efca1e57c"
+  integrity sha512-rWN5cu5DL0l1zue8h1cu2Xo35XaijniljPA1ly+PGRNyaL0URrlaE+SNfcAnr3mGyTJoIZXbXvyoGpjuiMF8+A==
+  dependencies:
+    "@grapecity/spread-sheets" "15.2.5"
+
+"@grapecity/spread-sheets-vue@^15.2.5":
+  version "15.2.5"
+  resolved "https://registry.yarnpkg.com/@grapecity/spread-sheets-vue/-/spread-sheets-vue-15.2.5.tgz#ffeee7fe36ba0c135b3698904d0c52b3ab98c844"
+  integrity sha512-wViccuRvYW377OTkil/cXX3Cty2LXoyv8Z+XEHWEPOAIM80DllpebSHEBv0jqLHeTcQc6WRx0QPzwUF2ANG5Gg==
+  dependencies:
+    "@grapecity/spread-sheets" "15.2.5"
+    tiny-emitter "^2.1.0"
+
+"@grapecity/spread-sheets@15.2.5", "@grapecity/spread-sheets@^15.2.5":
+  version "15.2.5"
+  resolved "https://registry.yarnpkg.com/@grapecity/spread-sheets/-/spread-sheets-15.2.5.tgz#70990d45133448047d3d19eb3654f0622d8da8aa"
+  integrity sha512-3FEiTaC+b595bBATGp/q7TB08gJ5Bqpj8fnzZfM7EjbQ+1EsM8oXK4UlKxOuyOTd9zb1rqAky0YFMBr8PeQnEA==
+
 "@hapi/hoek@^9.0.0":
   version "9.3.0"
   resolved "https://registry.npmmirror.com/@hapi/hoek/-/hoek-9.3.0.tgz#8368869dcb735be2e7f5cb7647de78e167a251fb"
@@ -5520,6 +5540,11 @@ thunky@^1.0.2:
   version "1.1.0"
   resolved "https://registry.npmmirror.com/thunky/-/thunky-1.1.0.tgz#5abaf714a9405db0504732bbccd2cedd9ef9537d"
   integrity sha512-eHY7nBftgThBqOyHGVN+l8gF0BucP09fMo0oO/Lb0w1OF80dJv+lDVpXG60WMQvkcxAkNybKsrEIE3ZtKGmPrA==
+
+tiny-emitter@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/tiny-emitter/-/tiny-emitter-2.1.0.tgz#1d1a56edfc51c43e863cbb5382a72330e3555423"
+  integrity sha512-NB6Dk1A9xgQPMoGqC5CVXn123gWyte215ONT5Pp5a0yt4nlEoO1ZWeCwpncaekPHXO60i47ihFnZPiRPjRMq4Q==
 
 to-fast-properties@^2.0.0:
   version "2.0.0"
