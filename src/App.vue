@@ -4,7 +4,6 @@
     <br>
     <button @click="loadExcel">import</button>
     <button @click="saveFile">export</button>
-    <button @click="test">test</button>
     <span>{{progress}}</span>
     <gc-spread-sheets
         :hostClass="hostClass"
@@ -69,9 +68,6 @@ export default {
       // console.log(s.getArray(0,0,s.getRowCount(),s.getColumnCount()))
     },
     saveFile(e) {
-
-    },
-    test() {
       //建立name到data行号的映射表
       let mpSheet = this.spread.getSheetFromName('__TC_Taxonomy_Core')
       let mpNameColumnId = 0
