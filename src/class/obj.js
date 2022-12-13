@@ -1,4 +1,8 @@
-function htmlTag(tagName, attributes = {}, value = '') {
+function htmlTag(tagName=null, attributes = {}, value = '') {
+    if(tagName===null){
+        this.value=value
+        return this
+    }
     let res = '<' + tagName;
     for (let key in attributes) {
         res += ' ' + key + '=' + `'${attributes[key]}'`

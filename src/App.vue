@@ -4,7 +4,7 @@
     <br>
     <button @click="loadExcel">import</button>
     <button @click="saveFile">export</button>
-    <span>{{progress}}</span>
+    <span>{{ progress }}</span>
     <gc-spread-sheets
         :hostClass="hostClass"
         @workbookInitialized="initWorkbook"
@@ -30,7 +30,7 @@ export default {
       exportFileName: "export.xlsx",
       password: "",
       mp: new Map(),
-      progress:'tip'
+      progress: 'tip'
     };
   },
   methods: {
@@ -116,6 +116,7 @@ export default {
         '__XbrlMatch': 1
       }
 
+      //显式标签
       //遍历sheet
       for (let i = 0; i < this.spread.getSheetCount(); i++) {
         let currentSheetName = this.spread.getSheet(i).name()
@@ -185,10 +186,10 @@ export default {
           }
           //修改单元格样式
           for (let r = 0; r < pa.children.length; r++) {
-            pa.children[r].children[0].style.padding='0 0 0 10px'
+            pa.children[r].children[0].style.padding = '0 0 0 10px'
           }
           //替换指定数据为xhtml标签
-          if(!!tasklist){
+          if (!!tasklist) {
             for (let i = 0; i < tasklist.length; i++) {
               this.changeTag(pa, tasklist[i].posr - hiddenRowsNum[tasklist[i].posr], tasklist[i].posc - hiddenColumnsNum[tasklist[i].posc], tasklist[i].ixbrlTag.value)
             }
@@ -200,7 +201,52 @@ export default {
           })).value
         }
         //tip进度提示
-        this.progress='sheet ' + currentSheetName + ' is ok.'
+        this.progress = 'sheet ' + currentSheetName + ' is ok.'
+      }
+      //隐藏标签
+      for (let i = 0; i < this.spread.getSheetCount(); i++) {
+        let currentSheetName = this.spread.getSheet(i).name()
+        if (currentSheetName === 'BasicInfoSchema') {
+          let sheet = this.spread.getSheetFromName(currentSheetName)
+          let tmp = new htmlTag('div', {
+            id: 'BasicInfoSchema',
+            class: 'BasicInfoSchema',
+            style: 'display:none'
+          })
+          let sheetRc = sheet.getRowCount()
+          let nameColumnId = 0, valueColumnId = 1
+          for (let i = 1; i < sheetRc; i++) {
+            let name = sheet.getValue(i, nameColumnId)
+            let value = sheet.getValue(i, valueColumnId)
+            if (value === null)
+              value = ''
+            let ixbrlTag = this.getixbrlTag(name, value)
+            tmp.add(ixbrlTag)
+          }
+          total.innerHTML+=tmp.value
+          //tip进度提示
+          this.progress = 'sheet ' + currentSheetName + ' is ok.'
+        } else if (currentSheetName === 'ProfitsTaxReturn') {
+          let sheet = this.spread.getSheetFromName(currentSheetName)
+          let tmp = new htmlTag('div', {
+            id: 'ProfitsTaxReturn',
+            class: 'ProfitsTaxReturn',
+            style: 'display:none'
+          })
+          let sheetRc = sheet.getRowCount()
+          let nameColumnId = 0, valueColumnId = 2
+          for (let i = 1; i < sheetRc; i++) {
+            let name = sheet.getValue(i, nameColumnId)
+            let value = sheet.getValue(i, valueColumnId)
+            if (value === null)
+              value = ''
+            let ixbrlTag = this.getixbrlTag(name, value)
+            tmp.add(ixbrlTag)
+          }
+          total.innerHTML+=tmp.value
+          //tip进度提示
+          this.progress = 'sheet ' + currentSheetName + ' is ok.'
+        }
       }
       //输出
       let urlObject = window.URL || window.webkitURL || window
@@ -236,6 +282,8 @@ export default {
           tg = new htmlTag('ix:nonNumeric', attr, value)
         }
         return tg
+      } else {
+        return new htmlTag(null, {}, value)
       }
     },
     getPos(pos) {//获取行列下标
