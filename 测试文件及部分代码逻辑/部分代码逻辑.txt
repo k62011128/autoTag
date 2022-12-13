@@ -1,0 +1,43 @@
+拼接方式
+一、显式数据
+遍历__XbrlMatch每一个数据行，假设它是一个Record对象
+1、通过Record.Value的公式可以定位到它的实际位置，要用ixbrl标签来替换
+2、生成该值ixbrl标签，形式如下
+<ix:nonFraction contextRef="irdc89d4e97-a1b1-48bc-b93f-91fc54301bb8" unitRef="ird5b2f99d8-4a00-4b18-b5d9-9b62560aa916" name="ird_tc:UnapprovedDonations" id="ird953c39cd-04b9-4d3e-92e6-ef80eda78724" scale='0' decimals='INF' format="ixt:num-dot-decimal">29,000</ix:nonFraction>
+标签生成规则
+在Sheet:TC_Taxonomy_Core中查找对应的Name=Record.Name的行，
+if Findrow{
+	生成标签属性 contextRef="Findrow.contextRef"
+	生成标签属性 id="随机32位数字"
+	if Findrow.type="xbrli:monetaryItemType" {
+	   生成标签头 ix:nonFraction 
+	   生成标签属性 scale='0' decimals='INF' format="ixt:num-dot-decimal" 
+		unitRef="ird5b2f99d8-4a00-4b18-b5d9-9b62560aa916";
+	}
+	else{
+		生成标签头 ix:nonNumeric
+		if Findrow.type="xbrli:dateItemType"{
+			生成标签属性 format="ixt:date-month-day-year"
+	               }
+	  }
+
+最终生成
+<标签头 标签属性>Record.Value</标签头>
+}
+else{
+ 保持 Record.Value
+}
+
+二、隐藏数据
+隐藏数据的值是单独存放在一张表里的，不用把加工后的标签再塞到表格中，直接输出即可。
+xbrl标签和上述显示数据规则一样
+1、遍历sheet BasicInfoSchema
+生成
+<div id='BasicInfoSchema' class='BasicInfoSchema' style='display:none'>
+xbrl标签
+</div>
+2、遍历sheet ProfitsTaxReturn
+生成
+<div id='ProfitsTaxReturn' class='ProfitsTaxReturn' style='display:none'>
+xbrl标签
+</div>
