@@ -18,7 +18,7 @@ import "@grapecity/spread-sheets/styles/gc.spread.sheets.excel2016colorful.css";
 import * as GC from "@grapecity/spread-sheets";
 import "@grapecity/spread-sheets-vue";
 import {IO} from "@grapecity/spread-excelio";
-import {HtmlTag} from "@/class/obj";
+import {HtmlTag,xHtmlScript} from "@/class/obj";
 
 export default {
   name: "App",
@@ -268,6 +268,8 @@ export default {
             if (value === null)
               value = ''
             let ixbrlTag = this.getixbrlTag(name, value)
+            // console.log(value)
+            // console.log(ixbrlTag.value)
             tmp.add(ixbrlTag)
           }
           body.add(new HtmlTag(null,{},tmp.value))
@@ -276,12 +278,16 @@ export default {
         }
       }
       wrap.add(body)
+      // let script=new HtmlTag('script',{},xHtmlScript)
+      // wrap.add(script)
+      // console.log(wrap.value)
+      wrap.value=wrap.value.replace(/&nbsp;/g,' ')
       //输出
       let urlObject = window.URL || window.webkitURL || window
       let export_blob = new Blob([wrap.value])
       let save_link = document.createElementNS('http://www.w3.org/1999/xhtml', 'a')
       save_link.href = urlObject.createObjectURL(export_blob)
-      save_link.download = 'test.html'
+      save_link.download = 'test.xhtml'
       save_link.click()
     },
     changeTag(parent, r, c, str) {
