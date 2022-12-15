@@ -1,4 +1,4 @@
-function htmlTag(tagName=null, attributes = {}, value = '') {
+function HtmlTag(tagName=null, attributes = {}, value = '') {
     if(tagName===null){
         this.value=value
         return this
@@ -27,4 +27,4 @@ function htmlTag(tagName=null, attributes = {}, value = '') {
     return this
 }
 
-export {htmlTag}
+export {HtmlTag}

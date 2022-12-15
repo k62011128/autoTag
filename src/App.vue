@@ -18,7 +18,7 @@ import "@grapecity/spread-sheets/styles/gc.spread.sheets.excel2016colorful.css";
 import * as GC from "@grapecity/spread-sheets";
 import "@grapecity/spread-sheets-vue";
 import {IO} from "@grapecity/spread-excelio";
-import {htmlTag} from "@/class/obj";
+import {HtmlTag} from "@/class/obj";
 
 export default {
   name: "App",
@@ -104,8 +104,34 @@ export default {
       }
 
       //准备输出的文件
-      let total = document.createElement('div')
-
+      let wrap = new HtmlTag('html', {
+        'xmlns': "http://www.w3.org/1999/xhtml",
+        'xmlns:utr': "http://www.xbrl.org/2009/utr",
+        'xmlns:xlink': "http://www.w3.org/1999/xlink",
+        'xmlns:link': "http://www.xbrl.org/2003/linkbase",
+        'xmlns:xbrli': "http://www.xbrl.org/2003/instance",
+        'xmlns:ixt': "http://www.xbrl.org/inlineXBRL/transformation/2020-02-12",
+        'xmlns:ix':"http://www.xbrl.org/2013/inlineXBRL",
+        'xmlns:ird_tc':"http://xbrl.ird.gov.hk/taxonomy/2019-12-09/ird_tc",
+        'xmlns:iso4217':"http://www.xbrl.org/2003/iso4217",
+        'xmlns:xsi':"http://www.w3.org/2001/XMLSchema-instance",
+        'xmlns:xbrldi':"http://xbrl.org/2006/xbrldi",
+        'xmlns:xs':"http://www.w3.org/2001/XMLSchema",
+        'xmlns:xl':"http://www.xbrl.org/2003/XLink",
+        'xmlns:nonnum':"http://www.xbrl.org/dtr/type/non-numeric",
+        'xmlns:num':"http://www.xbrl.org/dtr/type/numeric",
+        'xmlns:xbrldt':"http://xbrl.org/2005/xbrldt",
+        'xmlns:ref':"http://www.xbrl.org/2006/ref",
+        'xml:lang':"en"
+      });
+      let head=new HtmlTag('head')
+      head.add(new HtmlTag('meta',{
+        'http-equiv':"Content-Type",
+        'content':"text/html;charset=utf-8",
+      }))
+      head.add(new HtmlTag('title'))
+      wrap.add(head)
+      let body=new HtmlTag('body')
       //生成表格要避开的sheetName
       let avoidSheet = {
         'Evaluation Version': 1,
@@ -123,7 +149,6 @@ export default {
         if (avoidSheet[currentSheetName] > 0) {
           continue
         } else {
-
           //获得当前sheet
           let sheet = this.spread.getSheetFromName(currentSheetName)
           let sheetRc = sheet.getRowCount()
@@ -194,11 +219,13 @@ export default {
               this.changeTag(pa, tasklist[i].posr - hiddenRowsNum[tasklist[i].posr], tasklist[i].posc - hiddenColumnsNum[tasklist[i].posc], tasklist[i].ixbrlTag.value)
             }
           }
-          total.innerHTML += (new htmlTag('div', {}, 'Sheet Name : ' + currentSheetName)).value
-          total.innerHTML += tmp.innerHTML
-          total.innerHTML += (new htmlTag('div', {
+          let divBox=new HtmlTag('div')
+          divBox.add(new HtmlTag('div', {}, 'Sheet Name : ' + currentSheetName))
+          divBox.add(new HtmlTag(null, {}, tmp.innerHTML))
+          divBox.add(new HtmlTag('div', {
             style: 'height:60px;'
-          })).value
+          }))
+          body.add(divBox)
         }
         //tip进度提示
         this.progress = 'sheet ' + currentSheetName + ' is ok.'
@@ -208,7 +235,7 @@ export default {
         let currentSheetName = this.spread.getSheet(i).name()
         if (currentSheetName === 'BasicInfoSchema') {
           let sheet = this.spread.getSheetFromName(currentSheetName)
-          let tmp = new htmlTag('div', {
+          let tmp = new HtmlTag('div', {
             id: 'BasicInfoSchema',
             class: 'BasicInfoSchema',
             style: 'display:none'
@@ -223,12 +250,12 @@ export default {
             let ixbrlTag = this.getixbrlTag(name, value)
             tmp.add(ixbrlTag)
           }
-          total.innerHTML+=tmp.value
+          body.add(new HtmlTag(null,{},tmp.value))
           //tip进度提示
           this.progress = 'sheet ' + currentSheetName + ' is ok.'
         } else if (currentSheetName === 'ProfitsTaxReturn') {
           let sheet = this.spread.getSheetFromName(currentSheetName)
-          let tmp = new htmlTag('div', {
+          let tmp = new HtmlTag('div', {
             id: 'ProfitsTaxReturn',
             class: 'ProfitsTaxReturn',
             style: 'display:none'
@@ -243,14 +270,15 @@ export default {
             let ixbrlTag = this.getixbrlTag(name, value)
             tmp.add(ixbrlTag)
           }
-          total.innerHTML+=tmp.value
+          body.add(new HtmlTag(null,{},tmp.value))
           //tip进度提示
           this.progress = 'sheet ' + currentSheetName + ' is ok.'
         }
       }
+      wrap.add(body)
       //输出
       let urlObject = window.URL || window.webkitURL || window
-      let export_blob = new Blob([total.innerHTML])
+      let export_blob = new Blob([wrap.value])
       let save_link = document.createElementNS('http://www.w3.org/1999/xhtml', 'a')
       save_link.href = urlObject.createObjectURL(export_blob)
       save_link.download = 'test.html'
@@ -274,16 +302,16 @@ export default {
           attr['decimals'] = 'INF'
           attr['format'] = 'ixt:num-dot-decimal'
           attr['unitRef'] = 'ird5b2f99d8-4a00-4b18-b5d9-9b62560aa916'
-          tg = new htmlTag('ix:nonFraction', attr, value)
+          tg = new HtmlTag('ix:nonFraction', attr, value)
         } else if (arr[1] === 'xbrli:dateItemType') {
           attr['format'] = 'ixt:date-month-day-year'
-          tg = new htmlTag('ix:nonNumeric', attr, value)
+          tg = new HtmlTag('ix:nonNumeric', attr, value)
         } else {
-          tg = new htmlTag('ix:nonNumeric', attr, value)
+          tg = new HtmlTag('ix:nonNumeric', attr, value)
         }
         return tg
       } else {
-        return new htmlTag(null, {}, value)
+        return new HtmlTag(null, {}, value)
       }
     },
     getPos(pos) {//获取行列下标
