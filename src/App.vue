@@ -18,7 +18,7 @@ import "@grapecity/spread-sheets/styles/gc.spread.sheets.excel2016colorful.css";
 import * as GC from "@grapecity/spread-sheets";
 import "@grapecity/spread-sheets-vue";
 import {IO} from "@grapecity/spread-excelio";
-import {HtmlTag,xHtmlScript} from "@/class/obj";
+import {HtmlTag, xHtmlScript} from "@/class/obj";
 
 export default {
   name: "App",
@@ -102,7 +102,6 @@ export default {
         currentSheetTaskList.push({posr, posc, ixbrlTag})
         taskMap.set(sheetName, currentSheetTaskList)
       }
-
       //准备输出的文件
       let wrap = new HtmlTag('html', {
         'xmlns': "http://www.w3.org/1999/xhtml",
@@ -111,27 +110,28 @@ export default {
         'xmlns:link': "http://www.xbrl.org/2003/linkbase",
         'xmlns:xbrli': "http://www.xbrl.org/2003/instance",
         'xmlns:ixt': "http://www.xbrl.org/inlineXBRL/transformation/2020-02-12",
-        'xmlns:ix':"http://www.xbrl.org/2013/inlineXBRL",
-        'xmlns:ird_tc':"http://xbrl.ird.gov.hk/taxonomy/2019-12-09/ird_tc",
-        'xmlns:iso4217':"http://www.xbrl.org/2003/iso4217",
-        'xmlns:xsi':"http://www.w3.org/2001/XMLSchema-instance",
-        'xmlns:xbrldi':"http://xbrl.org/2006/xbrldi",
-        'xmlns:xs':"http://www.w3.org/2001/XMLSchema",
-        'xmlns:xl':"http://www.xbrl.org/2003/XLink",
-        'xmlns:nonnum':"http://www.xbrl.org/dtr/type/non-numeric",
-        'xmlns:num':"http://www.xbrl.org/dtr/type/numeric",
-        'xmlns:xbrldt':"http://xbrl.org/2005/xbrldt",
-        'xmlns:ref':"http://www.xbrl.org/2006/ref",
-        'xml:lang':"en"
+        'xmlns:ix': "http://www.xbrl.org/2013/inlineXBRL",
+        'xmlns:ird_tc': "http://xbrl.ird.gov.hk/taxonomy/2019-12-09/ird_tc",
+        'xmlns:iso4217': "http://www.xbrl.org/2003/iso4217",
+        'xmlns:xsi': "http://www.w3.org/2001/XMLSchema-instance",
+        'xmlns:xbrldi': "http://xbrl.org/2006/xbrldi",
+        'xmlns:xs': "http://www.w3.org/2001/XMLSchema",
+        'xmlns:xl': "http://www.xbrl.org/2003/XLink",
+        'xmlns:nonnum': "http://www.xbrl.org/dtr/type/non-numeric",
+        'xmlns:num': "http://www.xbrl.org/dtr/type/numeric",
+        'xmlns:xbrldt': "http://xbrl.org/2005/xbrldt",
+        'xmlns:ref': "http://www.xbrl.org/2006/ref",
+        'xml:lang': "en"
       });
-      let head=new HtmlTag('head')
-      head.add(new HtmlTag('meta',{
-        'http-equiv':"Content-Type",
-        'content':"text/html;charset=utf-8",
+      let head = new HtmlTag('head')
+      head.add(new HtmlTag('meta', {
+        'http-equiv': "Content-Type",
+        'content': "text/html;charset=utf-8",
       }))
       head.add(new HtmlTag('title'))
       wrap.add(head)
-      let body=new HtmlTag('body')
+      let body = new HtmlTag('body')
+
       //生成表格要避开的sheetName
       let avoidSheet = {
         'Evaluation Version': 1,
@@ -219,7 +219,7 @@ export default {
               this.changeTag(pa, tasklist[i].posr - hiddenRowsNum[tasklist[i].posr], tasklist[i].posc - hiddenColumnsNum[tasklist[i].posc], tasklist[i].ixbrlTag.value)
             }
           }
-          let divBox=new HtmlTag('div')
+          let divBox = new HtmlTag('div')
           divBox.add(new HtmlTag('div', {}, 'Sheet Name : ' + currentSheetName))
           divBox.add(new HtmlTag(null, {}, tmp.innerHTML))
           divBox.add(new HtmlTag('div', {
@@ -250,7 +250,7 @@ export default {
             let ixbrlTag = this.getixbrlTag(name, value)
             tmp.add(ixbrlTag)
           }
-          body.add(new HtmlTag(null,{},tmp.value))
+          body.add(new HtmlTag(null, {}, tmp.value))
           //tip进度提示
           this.progress = 'sheet ' + currentSheetName + ' is ok.'
         } else if (currentSheetName === 'ProfitsTaxReturn') {
@@ -272,16 +272,17 @@ export default {
             // console.log(ixbrlTag.value)
             tmp.add(ixbrlTag)
           }
-          body.add(new HtmlTag(null,{},tmp.value))
+          body.add(new HtmlTag(null, {}, tmp.value))
           //tip进度提示
           this.progress = 'sheet ' + currentSheetName + ' is ok.'
         }
       }
       wrap.add(body)
-      // let script=new HtmlTag('script',{},xHtmlScript)
-      // wrap.add(script)
-      // console.log(wrap.value)
-      wrap.value=wrap.value.replace(/&nbsp;/g,' ')
+      wrap.value = wrap.value.replace(/&nbsp;/g, ' ')
+      wrap.value = wrap.value.replace(/contextref/g, 'contextRef')
+      wrap.value = wrap.value.replace(/unitref/g, 'unitRef')
+      wrap.value = wrap.value.replace(/ix:nonfraction/g, 'ix:nonFraction')
+
       //输出
       let urlObject = window.URL || window.webkitURL || window
       let export_blob = new Blob([wrap.value])
@@ -291,7 +292,11 @@ export default {
       save_link.click()
     },
     changeTag(parent, r, c, str) {
-      parent.children[r].children[c].innerHTML = str
+      let sp = new HtmlTag('span', {
+        'style': 'line-height:22px;'
+      }, str)
+      parent.children[r].children[c].innerHTML = sp.value
+      parent.children[r].children[c].style.overflow = 'visible'
     },
     getixbrlTag(mpKey, value) {//获得生成的ixbrl标签
       let r = parseInt(this.mp.get(mpKey))
