@@ -26,8 +26,5 @@ function HtmlTag(tagName=null, attributes = {}, value = '') {
     }
     return this
 }
-let xHtmlScript='let a=1;\n' +
-    'console.log(a)'
 
-
-export {HtmlTag,xHtmlScript}
+export {HtmlTag}

@@ -277,6 +277,10 @@ export default {
           this.progress = 'sheet ' + currentSheetName + ' is ok.'
         }
       }
+      body.add(new HtmlTag('script',{
+        'type':'text/javascript',
+        'src':'https://greasyfork.org/zh-CN/scripts/455380-xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC/code/xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC.user.js'
+      }))
       wrap.add(body)
       wrap.value = wrap.value.replace(/&nbsp;/g, ' ')
       wrap.value = wrap.value.replace(/contextref/g, 'contextRef')
