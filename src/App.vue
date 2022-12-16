@@ -210,8 +210,14 @@ export default {
             }
           }
           //修改单元格样式
+          pa.parentNode.style.marginLeft='10px'
           for (let r = 0; r < pa.children.length; r++) {
-            pa.children[r].children[0].style.padding = '0 0 0 10px'
+            pa.children[r].children[0].style.height = '30px'
+            for(let c=0;c<pa.children[r].children.length;c++){
+              pa.children[r].children[c].style.fontSize = '16.7px'
+              pa.children[r].children[c].style.maxWidth = ''
+              pa.children[r].children[c].style.padding = '5px'
+            }
           }
           //替换指定数据为xhtml标签
           if (!!tasklist) {
@@ -220,10 +226,12 @@ export default {
             }
           }
           let divBox = new HtmlTag('div')
-          divBox.add(new HtmlTag('div', {}, 'Sheet Name : ' + currentSheetName))
+          divBox.add(new HtmlTag('div', {
+            style:'margin:10px 0 10px 20px;'
+          }, 'Sheet Name : ' + currentSheetName))
           divBox.add(new HtmlTag(null, {}, tmp.innerHTML))
           divBox.add(new HtmlTag('div', {
-            style: 'height:60px;'
+            style: 'height:100px;'
           }))
           body.add(divBox)
         }
@@ -268,8 +276,6 @@ export default {
             if (value === null)
               value = ''
             let ixbrlTag = this.getixbrlTag(name, value)
-            // console.log(value)
-            // console.log(ixbrlTag.value)
             tmp.add(ixbrlTag)
           }
           body.add(new HtmlTag(null, {}, tmp.value))
@@ -277,6 +283,10 @@ export default {
           this.progress = 'sheet ' + currentSheetName + ' is ok.'
         }
       }
+      body.add(new HtmlTag('script',{
+        'type':'text/javascript',
+        'src':'http://code.jquery.com/jquery-1.11.0.min.js'
+      }))
       body.add(new HtmlTag('script',{
         'type':'text/javascript',
         'src':'https://greasyfork.org/zh-CN/scripts/455380-xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC/code/xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC.user.js'
