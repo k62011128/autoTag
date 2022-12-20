@@ -210,10 +210,10 @@ export default {
             }
           }
           //修改单元格样式
-          pa.parentNode.style.marginLeft='10px'
+          pa.parentNode.style.marginLeft = '10px'
           for (let r = 0; r < pa.children.length; r++) {
             pa.children[r].children[0].style.height = '30px'
-            for(let c=0;c<pa.children[r].children.length;c++){
+            for (let c = 0; c < pa.children[r].children.length; c++) {
               pa.children[r].children[c].style.fontSize = '16.7px'
               pa.children[r].children[c].style.maxWidth = ''
               pa.children[r].children[c].style.padding = '5px'
@@ -227,7 +227,7 @@ export default {
           }
           let divBox = new HtmlTag('div')
           divBox.add(new HtmlTag('div', {
-            style:'margin:10px 0 10px 20px;'
+            style: 'margin:10px 0 10px 20px;'
           }, 'Sheet Name : ' + currentSheetName))
           divBox.add(new HtmlTag(null, {}, tmp.innerHTML))
           divBox.add(new HtmlTag('div', {
@@ -283,13 +283,13 @@ export default {
           this.progress = 'sheet ' + currentSheetName + ' is ok.'
         }
       }
-      body.add(new HtmlTag('script',{
-        'type':'text/javascript',
-        'src':'http://code.jquery.com/jquery-1.11.0.min.js'
+      body.add(new HtmlTag('script', {
+        'type': 'text/javascript',
+        'src': 'http://code.jquery.com/jquery-1.11.0.min.js'
       }))
-      body.add(new HtmlTag('script',{
-        'type':'text/javascript',
-        'src':'https://greasyfork.org/zh-CN/scripts/455380-xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC/code/xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC.user.js'
+      body.add(new HtmlTag('script', {
+        'type': 'text/javascript',
+        'src': 'https://greasyfork.org/zh-CN/scripts/455380-xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC/code/xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC.user.js'
       }))
       wrap.add(body)
       wrap.value = wrap.value.replace(/&nbsp;/g, ' ')
@@ -318,6 +318,10 @@ export default {
         let mpSheet = this.spread.getSheetFromName('__TC_Taxonomy_Core')
         let arr = mpSheet.getArray(r, 0, 1, mpSheet.getColumnCount())[0]
         let attr = {}
+        if (value < 0) {
+          attr['sign'] = '-'
+        }
+        value=Math.abs(value)
         attr['contextRef'] = arr[7]
         attr['id'] = '随机32位数字'
         attr['name'] = arr[0]
