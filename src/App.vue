@@ -70,11 +70,15 @@ export default {
     saveFile(e) {
       //建立name到data行号的映射表
       let mpSheet = this.spread.getSheetFromName('__TC_Taxonomy_Core')
+      if(mpSheet===null){
+        console.log('Sheet:__TC_Taxonomy_Core未找到！')
+        return
+      }
       let mpNameColumnId = 0
       for (let r = 1; r < mpSheet.getRowCount(); r++) {
         let str = mpSheet.getValue(r, mpNameColumnId)
         if (str === null) {
-          console.log('cell(' + r + ',' + mpNameColumnId + ').value is null!')
+          console.log('__TC_Taxonomy_Core:cell(' + r + ',' + mpNameColumnId + ').value is null!')
           continue
         }
         this.mp.set(str, r)
@@ -82,12 +86,16 @@ export default {
       //预处理任务列表
       let taskMap = new Map()
       let xbrlMatch = this.spread.getSheetFromName('__XbrlMatch')
+      if(xbrlMatch===null){
+        console.log('Sheet:__XbrlMatch未找到！')
+        return
+      }
       let valueColumnId = 2, nameColumnId = 4
       for (let r = 1; r < xbrlMatch.getRowCount(); r++) {
         let str = xbrlMatch.getFormula(r, valueColumnId)
         let value = xbrlMatch.getValue(r, valueColumnId)
         if (str === null) {
-          console.log('cell(' + r + ',' + valueColumnId + ').formula is null!')
+          console.log('__XbrlMatch:cell(' + r + ',' + valueColumnId + ').formula is null!')
           continue
         }
         let arr = str.split('!')
