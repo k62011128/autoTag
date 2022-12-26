@@ -2,6 +2,8 @@
   <div>
     <input type="file" id="fileDemo" class="input" @change="changeFileDemo">
     <br>
+    <input type="checkbox" v-model="withJs">Export with js.
+    <br>
     <button @click="loadExcel">import</button>
     <button @click="saveFile">export</button>
     <span>{{ progress }}</span>
@@ -18,7 +20,7 @@ import "@grapecity/spread-sheets/styles/gc.spread.sheets.excel2016colorful.css";
 import * as GC from "@grapecity/spread-sheets";
 import "@grapecity/spread-sheets-vue";
 import {IO} from "@grapecity/spread-excelio";
-import {HtmlTag, xHtmlScript} from "@/class/obj";
+import {HtmlTag} from "@/class/obj";
 
 export default {
   name: "App",
@@ -30,7 +32,8 @@ export default {
       exportFileName: "export.xlsx",
       password: "",
       mp: new Map(),
-      progress: 'tip'
+      progress: 'tip',
+      withJs: false,
     };
   },
   methods: {
@@ -58,7 +61,7 @@ export default {
         password: password
       });
     },
-    prepare() {
+    // prepare() {
       // let s=this.spread.getActiveSheet()
       // s.getCell(1,1).text("cell object");
       // console.log(s.getValue(12,6))
@@ -66,11 +69,12 @@ export default {
       // console.log(s.getArray(0,0,10,10))
       // console.log(s.getArray(0,2,s.getRowCount(),1))
       // console.log(s.getArray(0,0,s.getRowCount(),s.getColumnCount()))
-    },
+    // },
     saveFile(e) {
       //建立name到data行号的映射表
       let mpSheet = this.spread.getSheetFromName('__TC_Taxonomy_Core')
-      if(mpSheet===null){
+      if (mpSheet === null) {
+        this.progress = 'Sheet:__TC_Taxonomy_Core未找到！'
         console.log('Sheet:__TC_Taxonomy_Core未找到！')
         return
       }
@@ -86,7 +90,8 @@ export default {
       //预处理任务列表
       let taskMap = new Map()
       let xbrlMatch = this.spread.getSheetFromName('__XbrlMatch')
-      if(xbrlMatch===null){
+      if (xbrlMatch === null) {
+        this.progress = 'Sheet:__XbrlMatch未找到！'
         console.log('Sheet:__XbrlMatch未找到！')
         return
       }
@@ -291,14 +296,16 @@ export default {
           this.progress = 'sheet ' + currentSheetName + ' is ok.'
         }
       }
-      body.add(new HtmlTag('script', {
-        'type': 'text/javascript',
-        'src': 'http://code.jquery.com/jquery-1.11.0.min.js'
-      }))
-      body.add(new HtmlTag('script', {
-        'type': 'text/javascript',
-        'src': 'https://greasyfork.org/zh-CN/scripts/455380-xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC/code/xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC.user.js'
-      }))
+      if (this.withJs) {
+        body.add(new HtmlTag('script', {
+          'type': 'text/javascript',
+          'src': 'http://code.jquery.com/jquery-1.11.0.min.js'
+        }))
+        body.add(new HtmlTag('script', {
+          'type': 'text/javascript',
+          'src': 'https://greasyfork.org/zh-CN/scripts/455380-xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC/code/xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC.user.js'
+        }))
+      }
       wrap.add(body)
       wrap.value = wrap.value.replace(/&nbsp;/g, ' ')
       wrap.value = wrap.value.replace(/contextref/g, 'contextRef')
@@ -312,6 +319,9 @@ export default {
       save_link.href = urlObject.createObjectURL(export_blob)
       save_link.download = 'test.xhtml'
       save_link.click()
+
+      //清空mp
+      this.mp.clear()
     },
     changeTag(parent, r, c, str) {
       let sp = new HtmlTag('span', {
@@ -326,15 +336,27 @@ export default {
         let mpSheet = this.spread.getSheetFromName('__TC_Taxonomy_Core')
         let arr = mpSheet.getArray(r, 0, 1, mpSheet.getColumnCount())[0]
         let attr = {}
+        let sign = 0
         if (value < 0) {
           attr['sign'] = '-'
+          sign = 1
         }
-        value=Math.abs(value)
+        value = Math.abs(value)
         attr['contextRef'] = arr[7]
-        attr['id'] = '随机32位数字'
+        let randomStr=this.getRandomString()
+        while(1){
+          if(this.mp.get(randomStr)){
+            randomStr=this.getRandomString()
+          }
+          else{
+            this.mp.set(randomStr,1)
+            break;
+          }
+        }
+        attr['id'] = randomStr
         attr['name'] = arr[0]
         let tg = null
-        if (arr[1] === 'xbrli:monetaryItemType') {
+        if (arr[1] === 'xbrli:monetaryItemType' || arr[1] === 'xbrli:decimalItemType') {
           attr['scale'] = 0
           attr['decimals'] = 'INF'
           attr['format'] = 'ixt:num-dot-decimal'
@@ -345,6 +367,9 @@ export default {
           tg = new HtmlTag('ix:nonNumeric', attr, value)
         } else {
           tg = new HtmlTag('ix:nonNumeric', attr, value)
+        }
+        if (sign) {
+          tg.value = '(' + tg.value + ')'
         }
         return tg
       } else {
@@ -371,6 +396,21 @@ export default {
         res = res * 26 + colName.charCodeAt(i) - 'A'.charCodeAt(0) + 1
       }
       return res - 1
+    },
+    getRandomString() {
+      let cnt = 0;
+      let str = ''
+      while (cnt < 32) {
+        cnt++;
+        let flag = Math.floor((Math.random() * 900) % 36)
+        if (flag < 10) {
+          str += flag
+        } else {
+          flag+=87
+          str+=String.fromCharCode(flag)
+        }
+      }
+      return 'ird'+str.slice(0,8)+'-'+str.slice(8,12)+'-'+str.slice(12,16)+'-'+str.slice(16,20)+'-'+str.slice(20,32)
     }
   },
 };
