@@ -44,6 +44,7 @@ export default {
     },
     changeFileDemo(e) {
       this.importExcelFile = e.target.files[0];
+      this.exportFileName = this.importExcelFile.name.replace(/xlsx/,'xhtml')
     },
     loadExcel(e) {
       let spread = this.spread;
@@ -62,13 +63,13 @@ export default {
       });
     },
     // prepare() {
-      // let s=this.spread.getActiveSheet()
-      // s.getCell(1,1).text("cell object");
-      // console.log(s.getValue(12,6))
-      // console.log(s.getFormula(12,6))
-      // console.log(s.getArray(0,0,10,10))
-      // console.log(s.getArray(0,2,s.getRowCount(),1))
-      // console.log(s.getArray(0,0,s.getRowCount(),s.getColumnCount()))
+    // let s=this.spread.getActiveSheet()
+    // s.getCell(1,1).text("cell object");
+    // console.log(s.getValue(12,6))
+    // console.log(s.getFormula(12,6))
+    // console.log(s.getArray(0,0,10,10))
+    // console.log(s.getArray(0,2,s.getRowCount(),1))
+    // console.log(s.getArray(0,0,s.getRowCount(),s.getColumnCount()))
     // },
     saveFile(e) {
       //建立name到data行号的映射表
@@ -317,7 +318,7 @@ export default {
       let export_blob = new Blob([wrap.value])
       let save_link = document.createElementNS('http://www.w3.org/1999/xhtml', 'a')
       save_link.href = urlObject.createObjectURL(export_blob)
-      save_link.download = 'test.xhtml'
+      save_link.download = this.exportFileName
       save_link.click()
 
       //清空mp
@@ -343,13 +344,12 @@ export default {
         }
         value = Math.abs(value)
         attr['contextRef'] = arr[7]
-        let randomStr=this.getRandomString()
-        while(1){
-          if(this.mp.get(randomStr)){
-            randomStr=this.getRandomString()
-          }
-          else{
-            this.mp.set(randomStr,1)
+        let randomStr = this.getRandomString()
+        while (1) {
+          if (this.mp.get(randomStr)) {
+            randomStr = this.getRandomString()
+          } else {
+            this.mp.set(randomStr, 1)
             break;
           }
         }
@@ -406,11 +406,11 @@ export default {
         if (flag < 10) {
           str += flag
         } else {
-          flag+=87
-          str+=String.fromCharCode(flag)
+          flag += 87
+          str += String.fromCharCode(flag)
         }
       }
-      return 'ird'+str.slice(0,8)+'-'+str.slice(8,12)+'-'+str.slice(12,16)+'-'+str.slice(16,20)+'-'+str.slice(20,32)
+      return 'ird' + str.slice(0, 8) + '-' + str.slice(8, 12) + '-' + str.slice(12, 16) + '-' + str.slice(16, 20) + '-' + str.slice(20, 32)
     }
   },
 };
