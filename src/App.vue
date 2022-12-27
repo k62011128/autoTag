@@ -309,6 +309,10 @@ export default {
       }
       wrap.add(body)
       wrap.value = wrap.value.replace(/&nbsp;/g, ' ')
+      wrap.value = wrap.value.replace(/&lt;/g, '<')
+      wrap.value = wrap.value.replace(/&gt;/g, '>')
+      wrap.value = wrap.value.replace(/&amp;/g, '&')
+      wrap.value = wrap.value.replace(/&quot;/g, '\'')
       wrap.value = wrap.value.replace(/contextref/g, 'contextRef')
       wrap.value = wrap.value.replace(/unitref/g, 'unitRef')
       wrap.value = wrap.value.replace(/ix:nonfraction/g, 'ix:nonFraction')
