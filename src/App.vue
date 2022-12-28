@@ -40,11 +40,11 @@ export default {
     initWorkbook: function (spread) {
       //initializing
       this.spread = spread;
-      let worksheet = spread.getActiveSheet();
+      // let worksheet = spread.getActiveSheet();
     },
     changeFileDemo(e) {
       this.importExcelFile = e.target.files[0];
-      this.exportFileName = this.importExcelFile.name.replace(/xlsx/,'xhtml')
+      // this.exportFileName = this.importExcelFile.name.replace(/xlsx/, 'xhtml')
     },
     loadExcel(e) {
       let spread = this.spread;
@@ -72,6 +72,28 @@ export default {
     // console.log(s.getArray(0,0,s.getRowCount(),s.getColumnCount()))
     // },
     saveFile(e) {
+      //从名称管理器里取值
+      const sheet = this.spread.getActiveSheet()
+      const customNames = this.spread.getCustomNames()
+      const nameObj = {}
+      customNames.forEach((name) => {
+        const nameFormula = GC.Spread.Sheets.CalcEngine.expressionToFormula(
+            this.spread, name.getExpression(), 0, 0
+        )
+        const result = GC.Spread.Sheets.CalcEngine.evaluateFormula(
+            sheet, nameFormula, 0, 0
+        )
+        // console.log(name.getName(), '的值为', result)
+        nameObj[name.getName()] = result
+      })
+      //常量
+      const CompanyName = nameObj['CompanyName'] || 'CompanyName'
+      const IRDFileNumberRear = nameObj['IRDFileNumberRear'] || 'IRDFileNumberRear'
+      const YearOfAssessment = nameObj['YearOfAssessment'] || 'YearOfAssessment'
+      // console.log(CompanyName)
+      // console.log(IRDFileNumberRear)
+      // console.log(YearOfAssessment)
+
       //建立name到data行号的映射表
       let mpSheet = this.spread.getSheetFromName('__TC_Taxonomy_Core')
       if (mpSheet === null) {
@@ -96,7 +118,7 @@ export default {
         console.log('Sheet:__XbrlMatch未找到！')
         return
       }
-      let valueColumnId = 2, nameColumnId = 4
+      let valueColumnId = 2, nameColumnId = 1
       for (let r = 1; r < xbrlMatch.getRowCount(); r++) {
         let str = xbrlMatch.getFormula(r, valueColumnId)
         let value = xbrlMatch.getValue(r, valueColumnId)
@@ -142,20 +164,107 @@ export default {
         'http-equiv': "Content-Type",
         'content': "text/html;charset=utf-8",
       }))
-      head.add(new HtmlTag('title'))
+      head.add(new HtmlTag('title', {}, CompanyName + ' - Tax Computation'))
       wrap.add(head)
       let body = new HtmlTag('body')
-
       //生成表格要避开的sheetName
       let avoidSheet = {
         'Evaluation Version': 1,
+        '__IRD_TC_Preliminary Edition': 1,
+        '__ISO4217': 1,
         '__Contexts': 1,
         '__TC_Taxonomy_Core': 1,
+        '__Mandatory': 1,
+        'InfoSchema': 1,
         'BasicInfoSchema': 1,
         'ProfitsTaxReturn': 1,
         '__XbrlMatch': 1
       }
-
+      //body头部的隐藏标签
+      let hdiv = new HtmlTag('div', {
+        'style': 'display:none'
+      })
+      let ih = new HtmlTag('ix:header')
+      let iref = new HtmlTag('ix:references', {
+        'xml:lang': "en"
+      })
+      let ls = new HtmlTag('link:schemaRef', {
+        'xlink:type': "simple",
+        'xlink:href': "http://xbrl.ird.gov.hk/taxonomy/2019-12-09/ird_tc_entry_point_2019-12-09.xsd"
+      })
+      iref.add(ls)
+      ih.add(iref)
+      let ires = new HtmlTag('ix:resources')
+      for (let i = 0; i < this.spread.getSheetCount(); i++) {
+        let currentSheetName = this.spread.getSheet(i).name()
+        if (currentSheetName === '__Contexts') {
+          //context上下文
+          let sheet = this.spread.getSheetFromName(currentSheetName)
+          let sheetRc = sheet.getRowCount()
+          let contextColumnId = 0, entityIdentifierColumnId = 1, entitySchemeColumnId = 2, periodTypeColumnId = 3,
+              startDateColumnId = 4, endDateColumnId = 5
+          for (let i = 1; i < sheetRc; i++) {
+            let context = sheet.getValue(i, contextColumnId)
+            let entityIdentifier = sheet.getValue(i, entityIdentifierColumnId)
+            let entityScheme = sheet.getValue(i, entitySchemeColumnId)
+            let periodType = sheet.getValue(i, periodTypeColumnId)
+            let startDate = sheet.getText(i, startDateColumnId)
+            let endDate = sheet.getText(i, endDateColumnId)
+            if(endDate.includes('/')){
+              let arr=endDate.split('/')
+              endDate=arr[2]+'/'+arr[0]+'/'+arr[1]
+            }
+            if(startDate.includes('/')){
+              let arr=startDate.split('/')
+              startDate=arr[2]+'/'+arr[0]+'/'+arr[1]
+            }
+            let xc = new HtmlTag('xbrli:context', {
+              'id': context
+            })
+            let xe = new HtmlTag('xbrli:entity')
+            xe.add(new HtmlTag('xbrli:identifier', {
+              'scheme': entityScheme
+            }, entityIdentifier))
+            xc.add(xe)
+            let xp = new HtmlTag('xbrli:period')
+            if (periodType === 'period') {
+              xp.add(new HtmlTag('xbrli:startDate', {}, startDate))
+              xp.add(new HtmlTag('xbrli:endDate', {}, endDate))
+            } else if (periodType === 'instant') {
+              xp.add(new HtmlTag('xbrli:instant', {}, endDate))
+            } else {
+              console.log(i + '行periodType不确定!')
+            }
+            xc.add(xp)
+            ires.add(xc)
+          }
+          //tip进度提示
+          this.progress = 'sheet ' + currentSheetName + ' is ok.'
+          break;
+        }
+      }
+      for (let i = 0; i < this.spread.getSheetCount(); i++) {
+        let currentSheetName = this.spread.getSheet(i).name()
+        if (currentSheetName === '__ISO4217') {
+          //货币部分
+          let sheet = this.spread.getSheetFromName(currentSheetName)
+          let sheetRc = sheet.getRowCount()
+          let isonameColumnId = 4, idColumnId = 5
+          for (let i = 1; i < sheetRc; i++) {
+            let isoname = sheet.getValue(i, isonameColumnId)
+            let id = sheet.getValue(i, idColumnId)
+            let xu = new HtmlTag('xbrli:unit', {id})
+            xu.add(new HtmlTag('xbrli:measure', {}, isoname))
+            ires.add(xu)
+          }
+          //tip进度提示
+          this.progress = 'sheet ' + currentSheetName + ' is ok.'
+          break;
+        }
+      }
+      ih.add(ires)
+      hdiv.add(ih)
+      body.add(hdiv)
       //显式标签
       //遍历sheet
       for (let i = 0; i < this.spread.getSheetCount(); i++) {
@@ -252,51 +361,97 @@ export default {
         //tip进度提示
         this.progress = 'sheet ' + currentSheetName + ' is ok.'
       }
-      //隐藏标签
-      for (let i = 0; i < this.spread.getSheetCount(); i++) {
-        let currentSheetName = this.spread.getSheet(i).name()
-        if (currentSheetName === 'BasicInfoSchema') {
-          let sheet = this.spread.getSheetFromName(currentSheetName)
-          let tmp = new HtmlTag('div', {
-            id: 'BasicInfoSchema',
-            class: 'BasicInfoSchema',
-            style: 'display:none'
-          })
-          let sheetRc = sheet.getRowCount()
-          let nameColumnId = 0, valueColumnId = 1
-          for (let i = 1; i < sheetRc; i++) {
-            let name = sheet.getValue(i, nameColumnId)
-            let value = sheet.getValue(i, valueColumnId)
-            if (value === null)
-              value = ''
-            let ixbrlTag = this.getixbrlTag(name, value)
-            tmp.add(ixbrlTag)
-          }
-          body.add(new HtmlTag(null, {}, tmp.value))
-          //tip进度提示
-          this.progress = 'sheet ' + currentSheetName + ' is ok.'
-        } else if (currentSheetName === 'ProfitsTaxReturn') {
-          let sheet = this.spread.getSheetFromName(currentSheetName)
-          let tmp = new HtmlTag('div', {
-            id: 'ProfitsTaxReturn',
-            class: 'ProfitsTaxReturn',
-            style: 'display:none'
-          })
-          let sheetRc = sheet.getRowCount()
-          let nameColumnId = 0, valueColumnId = 2
-          for (let i = 1; i < sheetRc; i++) {
-            let name = sheet.getValue(i, nameColumnId)
-            let value = sheet.getValue(i, valueColumnId)
-            if (value === null)
-              value = ''
-            let ixbrlTag = this.getixbrlTag(name, value)
-            tmp.add(ixbrlTag)
-          }
-          body.add(new HtmlTag(null, {}, tmp.value))
-          //tip进度提示
-          this.progress = 'sheet ' + currentSheetName + ' is ok.'
-        }
-      }
+      //尾部隐藏标签
+      // for (let i = 0; i < this.spread.getSheetCount(); i++) {
+      //   let currentSheetName = this.spread.getSheet(i).name()
+      //   if (currentSheetName === 'InfoSchema') {
+      //     let sheet = this.spread.getSheetFromName(currentSheetName)
+      //     let tmp = new HtmlTag('div', {
+      //       id: 'BasicInfoSchema',
+      //       class: 'BasicInfoSchema',
+      //       style: 'display:none'
+      //     })
+      //     let sheetRc = sheet.getRowCount()
+      //     let nameColumnId = 0, valueColumnId = 1
+      //     for (let i = 1; i < sheetRc; i++) {
+      //       let name = sheet.getValue(i, nameColumnId)
+      //       let value = sheet.getValue(i, valueColumnId)
+      //       if (value === null)
+      //         value = ''
+      //       let ixbrlTag = this.getixbrlTag(name, value)
+      //       tmp.add(ixbrlTag)
+      //     }
+      //     body.add(new HtmlTag(null, {}, tmp.value))
+      //     //tip进度提示
+      //     this.progress = 'sheet ' + currentSheetName + ' is ok.'
+      //   } else if (currentSheetName === 'ProfitsTaxReturn') {
+      //     let sheet = this.spread.getSheetFromName(currentSheetName)
+      //     let tmp = new HtmlTag('div', {
+      //       id: 'ProfitsTaxReturn',
+      //       class: 'ProfitsTaxReturn',
+      //       style: 'display:none'
+      //     })
+      //     let sheetRc = sheet.getRowCount()
+      //     let nameColumnId = 0, valueColumnId = 2
+      //     for (let i = 1; i < sheetRc; i++) {
+      //       let name = sheet.getValue(i, nameColumnId)
+      //       let value = sheet.getValue(i, valueColumnId)
+      //       if (value === null)
+      //         value = ''
+      //       let ixbrlTag = this.getixbrlTag(name, value)
+      //       tmp.add(ixbrlTag)
+      //     }
+      //     body.add(new HtmlTag(null, {}, tmp.value))
+      //     //tip进度提示
+      //     this.progress = 'sheet ' + currentSheetName + ' is ok.'
+      //   }
+      // }
+
+
+      // for (let i = 0; i < this.spread.getSheetCount(); i++) {
+      //   let currentSheetName = this.spread.getSheet(i).name()
+      //   if (currentSheetName === 'BasicInfoSchema') {
+      //     let sheet = this.spread.getSheetFromName(currentSheetName)
+      //     let tmp = new HtmlTag('div', {
+      //       id: 'BasicInfoSchema',
+      //       class: 'BasicInfoSchema',
+      //       style: 'display:none'
+      //     })
+      //     let sheetRc = sheet.getRowCount()
+      //     let nameColumnId = 0, valueColumnId = 1
+      //     for (let i = 1; i < sheetRc; i++) {
+      //       let name = sheet.getValue(i, nameColumnId)
+      //       let value = sheet.getValue(i, valueColumnId)
+      //       if (value === null)
+      //         value = ''
+      //       let ixbrlTag = this.getixbrlTag(name, value)
+      //       tmp.add(ixbrlTag)
+      //     }
+      //     body.add(new HtmlTag(null, {}, tmp.value))
+      //     //tip进度提示
+      //     this.progress = 'sheet ' + currentSheetName + ' is ok.'
+      //   } else if (currentSheetName === 'ProfitsTaxReturn') {
+      //     let sheet = this.spread.getSheetFromName(currentSheetName)
+      //     let tmp = new HtmlTag('div', {
+      //       id: 'ProfitsTaxReturn',
+      //       class: 'ProfitsTaxReturn',
+      //       style: 'display:none'
+      //     })
+      //     let sheetRc = sheet.getRowCount()
+      //     let nameColumnId = 0, valueColumnId = 2
+      //     for (let i = 1; i < sheetRc; i++) {
+      //       let name = sheet.getValue(i, nameColumnId)
+      //       let value = sheet.getValue(i, valueColumnId)
+      //       if (value === null)
+      //         value = ''
+      //       let ixbrlTag = this.getixbrlTag(name, value)
+      //       tmp.add(ixbrlTag)
+      //     }
+      //     body.add(new HtmlTag(null, {}, tmp.value))
+      //     //tip进度提示
+      //     this.progress = 'sheet ' + currentSheetName + ' is ok.'
+      //   }
+      // }
       if (this.withJs) {
         body.add(new HtmlTag('script', {
           'type': 'text/javascript',
@@ -322,6 +477,7 @@ export default {
       let export_blob = new Blob([wrap.value])
       let save_link = document.createElementNS('http://www.w3.org/1999/xhtml', 'a')
       save_link.href = urlObject.createObjectURL(export_blob)
+      this.exportFileName = IRDFileNumberRear + '-' + YearOfAssessment + '-T-' + this.getCurrentDate() + '.xhtml'
       save_link.download = this.exportFileName
       save_link.click()
 
@@ -415,6 +571,31 @@ export default {
         }
       }
       return 'ird' + str.slice(0, 8) + '-' + str.slice(8, 12) + '-' + str.slice(12, 16) + '-' + str.slice(16, 20) + '-' + str.slice(20, 32)
+    },
+    getCurrentDate() {
+      let date = new Date()
+      let year = date.getFullYear()
+      let month = date.getMonth() + 1
+      let day = date.getDate()
+      let hour = date.getHours()
+      let minute = date.getMinutes()
+      let second = date.getSeconds()
+      if (month > 0 && month < 10) {
+        month = '0' + month
+      }
+      if (day >= 0 && day < 10) {
+        day = '0' + day
+      }
+      if (hour >= 0 && hour < 10) {
+        hour = '0' + hour
+      }
+      if (minute >= 0 && minute < 10) {
+        minute = '0' + minute
+      }
+      if (second >= 0 && second < 10) {
+        second = '0' + second
+      }
+      return '' + year + month + day + hour + minute + second
     }
   },
 };
