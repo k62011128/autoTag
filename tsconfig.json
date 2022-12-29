@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"],
+      "@assets": ["src/assets"],
+      "@components": ["src/components"],
+      "@views": ["src/views"],
+      "@layout": ["src/layout"]
+    },
+    "target": "ES5",
+    "strict": true,
+    "module": "es2015",
+    "moduleResolution": "node",
+    "allowJs": true,
+    "outDir": "./",
+    "strictPropertyInitialization": false,
+    "noImplicitAny": false
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
+  "exclude": ["node_modules", "dist","static","dr-sys"]
+}
