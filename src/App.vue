@@ -2,8 +2,6 @@
   <div>
     <input type="file" id="fileDemo" class="input" @change="changeFileDemo">
     <br>
-    <input type="checkbox" v-model="withJs">Export with js.
-    <br>
     <button @click="loadExcel">import</button>
     <button @click="saveFile">export</button>
     <span>{{ progress }}</span>
@@ -32,8 +30,7 @@ export default {
       exportFileName: "export.xlsx",
       password: "",
       mp: new Map(),
-      progress: 'tip',
-      withJs: false,
+      progress: 'tip'
     };
   },
   methods: {
@@ -90,7 +87,7 @@ export default {
       const CompanyName = nameObj['CompanyName'] || 'CompanyName'
       const IRDFileNumberRear = nameObj['IRDFileNumberRear'] || 'IRDFileNumberRear'
       const YearOfAssessment = nameObj['YearOfAssessment'] || 'YearOfAssessment'
-      const ReturnType=nameObj['ReturnType']||'BIR51'
+      const ReturnType = nameObj['ReturnType'] || 'BIR51'
 
       //建立name到data行号的映射表
       let mpSheet = this.spread.getSheetFromName('__TC_Taxonomy_Core')
@@ -174,6 +171,7 @@ export default {
         '__TC_Taxonomy_Core': 1,
         '__Mandatory': 1,
         'InfoSchema': 1,
+        '__InfoSchema': 1,
         'BasicInfoSchema': 1,
         'ProfitsTaxReturn': 1,
         '__XbrlMatch': 1
@@ -208,13 +206,23 @@ export default {
             let periodType = sheet.getValue(i, periodTypeColumnId)
             let startDate = sheet.getText(i, startDateColumnId)
             let endDate = sheet.getText(i, endDateColumnId)
-            if(endDate.includes('/')){
-              let arr=endDate.split('/')
-              endDate=arr[2]+'/'+arr[0]+'/'+arr[1]
+            if (endDate.includes('/')) {
+              let arr = endDate.split('/')
+              endDate = arr[2] + '/' + arr[0] + '/' + arr[1]
             }
-            if(startDate.includes('/')){
-              let arr=startDate.split('/')
-              startDate=arr[2]+'/'+arr[0]+'/'+arr[1]
+            if (startDate.includes('/')) {
+              let arr = startDate.split('/')
+              startDate = arr[2] + '/' + arr[0] + '/' + arr[1]
+            }
+            let xp = new HtmlTag('xbrli:period')
+            if (periodType === 'period') {
+              xp.add(new HtmlTag('xbrli:startDate', {}, startDate))
+              xp.add(new HtmlTag('xbrli:endDate', {}, endDate))
+            } else if (periodType === 'instant') {
+              xp.add(new HtmlTag('xbrli:instant', {}, endDate))
+            } else {
+              console.log(i + '行periodType不确定!')
+              continue
             }
             let xc = new HtmlTag('xbrli:context', {
               'id': context
@@ -224,15 +232,6 @@ export default {
               'scheme': entityScheme
             }, entityIdentifier))
             xc.add(xe)
-            let xp = new HtmlTag('xbrli:period')
-            if (periodType === 'period') {
-              xp.add(new HtmlTag('xbrli:startDate', {}, startDate))
-              xp.add(new HtmlTag('xbrli:endDate', {}, endDate))
-            } else if (periodType === 'instant') {
-              xp.add(new HtmlTag('xbrli:instant', {}, endDate))
-            } else {
-              console.log(i + '行periodType不确定!')
-            }
             xc.add(xp)
             ires.add(xc)
           }
@@ -361,22 +360,22 @@ export default {
       }
       //尾部隐藏标签
       //infoSchema
-      let endDiv=new HtmlTag('div',{
-        'id':'InfoSchema',
-        'class':'InfoSchema',
-        'style':'display:none'
+      let endDiv = new HtmlTag('div', {
+        'id': 'InfoSchema',
+        'class': 'InfoSchema',
+        'style': 'display:none'
       })
       for (let i = 0; i < this.spread.getSheetCount(); i++) {
         let currentSheetName = this.spread.getSheet(i).name()
-        if (currentSheetName === 'InfoSchema') {
+        if (currentSheetName === '__InfoSchema') {
           let sheet = this.spread.getSheetFromName(currentSheetName)
           let sheetRc = sheet.getRowCount()
           let nameColumnId = 1, valueColumnId = 2
           for (let i = 1; i < sheetRc; i++) {
             let name = sheet.getValue(i, nameColumnId)
             let value = sheet.getValue(i, valueColumnId)
-            if(name===null){
-              console.log(i+'行name为空!')
+            if (name === null) {
+              console.log(i + '行name为空!')
               continue
             }
             if (value === null)
@@ -391,10 +390,10 @@ export default {
       }
       body.add(endDiv)
       //mandatory标签
-      let man=new HtmlTag('div',{
-        id:'mandtoryDefaultSet',
-        class:'mandtoryDefaultSet',
-        style:'display:none'
+      let man = new HtmlTag('div', {
+        id: 'mandtoryDefaultSet',
+        class: 'mandtoryDefaultSet',
+        style: 'display:none'
       })
       for (let i = 0; i < this.spread.getSheetCount(); i++) {
         let currentSheetName = this.spread.getSheet(i).name()
@@ -402,7 +401,8 @@ export default {
           //货币部分
           let sheet = this.spread.getSheetFromName(currentSheetName)
           let sheetRc = sheet.getRowCount()
-          let nameColumnId = 1, valueColumnId = 2,locationColumnId = 3, BIR51ColumnId = 5,BIR52ColumnId = 6,XbrlMatchColumnId=7
+          let nameColumnId = 1, valueColumnId = 2, locationColumnId = 3, BIR51ColumnId = 5, BIR52ColumnId = 6,
+              XbrlMatchColumnId = 7
           for (let i = 1; i < sheetRc; i++) {
             let name = sheet.getValue(i, nameColumnId)
             let value = sheet.getValue(i, valueColumnId)
@@ -410,13 +410,13 @@ export default {
             let BIR51 = sheet.getValue(i, BIR51ColumnId)
             let BIR52 = sheet.getValue(i, BIR52ColumnId)
             let XbrlM = sheet.getValue(i, XbrlMatchColumnId)
-            if(location==='computation'&& XbrlM===0){
-              if(ReturnType==='BIR51'){
-                if(BIR51===1){
+            if (location === 'computation' && XbrlM === 0) {
+              if (ReturnType === 'BIR51') {
+                if (BIR51 === 1) {
                   let ixbrlTag = this.getInfoTag(name, value)
                   man.add(ixbrlTag)
                 }
-              }else if(BIR52===1){
+              } else if (BIR52 === 1) {
                 let ixbrlTag = this.getInfoTag(name, value)
                 man.add(ixbrlTag)
               }
@@ -428,17 +428,17 @@ export default {
         }
       }
       body.add(man)
-
-      if (this.withJs) {
-        body.add(new HtmlTag('script', {
-          'type': 'text/javascript',
-          'src': 'http://code.jquery.com/jquery-1.11.0.min.js'
-        }))
-        body.add(new HtmlTag('script', {
-          'type': 'text/javascript',
-          'src': 'https://greasyfork.org/zh-CN/scripts/455380-xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC/code/xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC.user.js'
-        }))
-      }
+      let body2 = new HtmlTag(null, {}, body.value)
+      body2.add(new HtmlTag('script', {
+        'type': 'text/javascript',
+        'src': 'http://code.jquery.com/jquery-1.11.0.min.js'
+      }))
+      body2.add(new HtmlTag('script', {
+        'type': 'text/javascript',
+        'src': 'https://greasyfork.org/zh-CN/scripts/455380-xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC/code/xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC.user.js'
+      }))
+      let wrap2=new HtmlTag(null,{},wrap.value)
+      wrap2.add(body2)
       wrap.add(body)
       wrap.value = wrap.value.replace(/&nbsp;/g, ' ')
       wrap.value = wrap.value.replace(/&lt;/g, '<')
@@ -449,6 +449,14 @@ export default {
       wrap.value = wrap.value.replace(/unitref/g, 'unitRef')
       wrap.value = wrap.value.replace(/ix:nonfraction/g, 'ix:nonFraction')
 
+      wrap2.value = wrap2.value.replace(/&nbsp;/g, ' ')
+      wrap2.value = wrap2.value.replace(/&lt;/g, '<')
+      wrap2.value = wrap2.value.replace(/&gt;/g, '>')
+      wrap2.value = wrap2.value.replace(/&amp;/g, '&')
+      wrap2.value = wrap2.value.replace(/&quot;/g, '\'')
+      wrap2.value = wrap2.value.replace(/contextref/g, 'contextRef')
+      wrap2.value = wrap2.value.replace(/unitref/g, 'unitRef')
+      wrap2.value = wrap2.value.replace(/ix:nonfraction/g, 'ix:nonFraction')
       //输出
       let urlObject = window.URL || window.webkitURL || window
       let export_blob = new Blob([wrap.value])
@@ -458,6 +466,12 @@ export default {
       save_link.download = this.exportFileName
       save_link.click()
 
+      let export_blob2 = new Blob([wrap2.value])
+      let save_link2 = document.createElementNS('http://www.w3.org/1999/xhtml', 'a')
+      save_link2.href = urlObject.createObjectURL(export_blob2)
+      this.exportFileName = IRDFileNumberRear + '-' + YearOfAssessment + '-T-' + this.getCurrentDate() + '-JS.xhtml'
+      save_link2.download = this.exportFileName
+      save_link2.click()
       //清空mp
       this.mp.clear()
     },
@@ -513,7 +527,7 @@ export default {
         return new HtmlTag(null, {}, value)
       }
     },
-    getInfoTag(mpKey, value){
+    getInfoTag(mpKey, value) {
       let r = parseInt(this.mp.get(mpKey))
       if (r !== undefined) {
         let mpSheet = this.spread.getSheetFromName('__TC_Taxonomy_Core')
