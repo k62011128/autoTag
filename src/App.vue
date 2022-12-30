@@ -269,6 +269,9 @@ export default {
         if (avoidSheet[currentSheetName] > 0) {
           continue
         } else {
+          if(currentSheetName.length>=2&&currentSheetName[0]==='_'&&currentSheetName[1]==='_'){
+            continue;
+          }
           //获得当前sheet
           let sheet = this.spread.getSheetFromName(currentSheetName)
           let sheetRc = sheet.getRowCount()
@@ -306,43 +309,49 @@ export default {
           let tmp = document.createElement('div')
           tmp.innerHTML = xhtml
           let pa = tmp.getElementsByTagName("tbody")[0]
-          //删除空白行列
-          let judge = new RegExp('\\S')
-          for (let r = pa.children.length - 1; r >= 0; r--) {
-            if (judge.test(pa.children[r].innerText)) {
-              break
-            } else {
-              pa.removeChild(pa.children[r])
-            }
-          }
-          let flag = 0;
-          for (let c = sheetCc - hiddenColumnsNum[sheetCc - 1] - 1; c >= 0; c--) {
-            for (let r = 0; r < pa.children.length; r++) {
-              if (judge.test(pa.children[r].children[c].innerText)) {
-                flag = 1;
+          //防空白处理
+          if (pa && pa.children && pa.children[0] && pa.children[0].children && pa.children[0].children[0]) {
+            //删除空白行列
+            let judge = new RegExp('\\S')
+            for (let r = pa.children.length - 1; r >= 0; r--) {
+              if (judge.test(pa.children[r].innerText)) {
                 break
+              } else {
+                pa.removeChild(pa.children[r])
               }
             }
-            if (flag)
-              break;
+            let flag = 0;
+            for (let c = sheetCc - hiddenColumnsNum[sheetCc - 1] - 1; c >= 0; c--) {
+              for (let r = 0; r < pa.children.length; r++) {
+                //防空白处理
+                if (pa.children[r].children[c]&&judge.test(pa.children[r].children[c].innerText)) {
+                  flag = 1;
+                  break
+                }
+              }
+              if (flag)
+                break;
+              for (let r = 0; r < pa.children.length; r++) {
+                //防空白处理
+                if (pa.children[r].children[c])
+                pa.children[r].removeChild(pa.children[r].children[c])
+              }
+            }
+            //修改单元格样式
             for (let r = 0; r < pa.children.length; r++) {
-              pa.children[r].removeChild(pa.children[r].children[c])
+              pa.children[r].children[0].style.height = '30px'
+              for (let c = 0; c < pa.children[r].children.length; c++) {
+                pa.children[r].children[c].style.fontSize = '16.7px'
+                pa.children[r].children[c].style.maxWidth = ''
+                pa.children[r].children[c].style.padding = '5px'
+              }
             }
-          }
-          //修改单元格样式
-          pa.parentNode.style.marginLeft = '10px'
-          for (let r = 0; r < pa.children.length; r++) {
-            pa.children[r].children[0].style.height = '30px'
-            for (let c = 0; c < pa.children[r].children.length; c++) {
-              pa.children[r].children[c].style.fontSize = '16.7px'
-              pa.children[r].children[c].style.maxWidth = ''
-              pa.children[r].children[c].style.padding = '5px'
-            }
-          }
-          //替换指定数据为xhtml标签
-          if (!!tasklist) {
-            for (let i = 0; i < tasklist.length; i++) {
-              this.changeTag(pa, tasklist[i].posr - hiddenRowsNum[tasklist[i].posr], tasklist[i].posc - hiddenColumnsNum[tasklist[i].posc], tasklist[i].ixbrlTag.value)
+            pa.parentNode.style.marginLeft = '10px'
+            //替换指定数据为xhtml标签
+            if (!!tasklist) {
+              for (let i = 0; i < tasklist.length; i++) {
+                this.changeTag(pa, tasklist[i].posr - hiddenRowsNum[tasklist[i].posr], tasklist[i].posc - hiddenColumnsNum[tasklist[i].posc], tasklist[i].ixbrlTag.value)
+              }
             }
           }
           let divBox = new HtmlTag('div')
@@ -437,7 +446,7 @@ export default {
         'type': 'text/javascript',
         'src': 'https://greasyfork.org/zh-CN/scripts/455380-xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC/code/xhtml%E5%AE%9A%E5%88%B6%E8%84%9A%E6%9C%AC.user.js'
       }))
-      let wrap2=new HtmlTag(null,{},wrap.value)
+      let wrap2 = new HtmlTag(null, {}, wrap.value)
       wrap2.add(body2)
       wrap.add(body)
       wrap.value = wrap.value.replace(/&nbsp;/g, ' ')
@@ -479,8 +488,12 @@ export default {
       let sp = new HtmlTag('span', {
         'style': 'line-height:22px;'
       }, str)
-      parent.children[r].children[c].innerHTML = sp.value
-      parent.children[r].children[c].style.overflow = 'visible'
+      if (parent.children && parent.children[r] && parent.children[r].children && parent.children[r].children[c]) {
+        parent.children[r].children[c].innerHTML = sp.value
+        parent.children[r].children[c].style.overflow = 'visible'
+      } else {
+        console.log('parent.children[' + r + '].children[' + c + ']为undefined!')
+      }
     },
     getixbrlTag(mpKey, value) {//获得生成的ixbrl标签
       let r = parseInt(this.mp.get(mpKey))
